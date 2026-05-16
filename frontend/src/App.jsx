@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from './utils/supabase';
 
 const initialCheckout = {
@@ -14,6 +14,8 @@ const initialCheckout = {
 
 export default function App() {
   const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -40,13 +42,29 @@ export default function App() {
     loadProducts();
   }, []);
 
+  const categories = useMemo(() => {
+    const unique = new Set(products.map((product) => product.product_category || '').filter(Boolean));
+    return ['All', ...Array.from(unique).sort()];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesCategory = category === 'All' || product.product_category === category;
+      const matchesSearch = search
+        ? product.product_name.toLowerCase().includes(search.toLowerCase()) ||
+          product.product_brand?.toLowerCase().includes(search.toLowerCase())
+        : true;
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, category, search]);
+
   const handleBuyNow = (product) => {
     setCheckoutError(null);
     setSelectedProduct(product);
     setCheckoutState('form');
   };
 
-  const handleChange = (event) => {
+  const handleCheckoutChange = (event) => {
     const { name, value } = event.target;
     setCheckoutData((prev) => ({ ...prev, [name]: value }));
   };
@@ -81,7 +99,7 @@ export default function App() {
       .single();
 
     if (insertError) {
-      throw new Error(insertError.message || 'Unable to create guest user');
+      throw new Error(insertError.message || 'Unable to create user profile');
     }
 
     return newUser;
@@ -154,125 +172,176 @@ export default function App() {
     setCheckoutError(null);
   };
 
-  if (loading) {
-    return <div>Loading products from Supabase...</div>;
-  }
-
-  if (error) {
-    return <div>Error loading products: {error}</div>;
-  }
-
   return (
-    <div style={{ padding: 24, fontFamily: 'sans-serif' }}>
-      <h1>eBay PH Supabase Products</h1>
+    <div className="app-shell">
+      <nav className="top-nav">
+        <div className="brand-block">
+          <div className="brand-icon">E</div>
+          <div>
+            <h1>EbayPh</h1>
+            <p>Philippines online marketplace</p>
+          </div>
+        </div>
+        <div className="nav-actions">
+          <button className="nav-button ghost">Sign in</button>
+          <button className="nav-button">Register</button>
+        </div>
+      </nav>
 
-      {selectedProduct ? (
-        <div style={{ maxWidth: 720, marginTop: 24 }}>
-          {checkoutState === 'success' ? (
-            <div style={{ padding: 24, border: '1px solid #d0f0d4', borderRadius: 14, background: '#f0fff4' }}>
-              <h2>Thank you for your purchase!</h2>
-              <p>
-                Your order for <strong>{selectedProduct.product_name}</strong> has been placed successfully.
-              </p>
-              <button onClick={resetCheckout} style={{ marginTop: 16, padding: '10px 18px', borderRadius: 10, border: 'none', background: '#0f172a', color: 'white', cursor: 'pointer' }}>
-                Back to products
-              </button>
-            </div>
-          ) : (
-            <div style={{ padding: 24, border: '1px solid #d0d7de', borderRadius: 14, background: '#ffffff' }}>
-              <h2>Checkout: {selectedProduct.product_name}</h2>
-              <p style={{ marginTop: 0 }}>{selectedProduct.product_description}</p>
-              <p>
-                <strong>Price:</strong> ₱{selectedProduct.product_price}
-              </p>
-              <div style={{ display: 'grid', gap: 12, marginTop: 18 }}>
-                <label>
-                  First name
-                  <input name="first_name" value={checkoutData.first_name} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
-                <label>
-                  Last name
-                  <input name="last_name" value={checkoutData.last_name} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
-                <label>
-                  Email
-                  <input name="email" value={checkoutData.email} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
-                <label>
-                  Phone
-                  <input name="phone" value={checkoutData.phone} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
-                <label>
-                  Street address
-                  <input name="street" value={checkoutData.street} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
-                <label>
-                  City
-                  <input name="city" value={checkoutData.city} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
-                <label>
-                  Country
-                  <input name="country" value={checkoutData.country} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
-                <label>
-                  Postal code
-                  <input name="postal_code" value={checkoutData.postal_code} onChange={handleChange} style={{ width: '100%', padding: 10, marginTop: 6, borderRadius: 10, border: '1px solid #cbd5e1' }} />
-                </label>
+      <header className="hero-panel">
+        <div className="hero-copy">
+          <p className="eyebrow">Philippines</p>
+          <h2>Find trusted deals, local sellers, and everyday essentials.</h2>
+          <p>
+            Browse featured listings across electronics, fashion, home, and more. Purchase with confidence from verified sellers in the Philippines.
+          </p>
+          <div className="hero-search">
+            <input
+              type="search"
+              placeholder="Search for phones, gadgets, sneakers, furniture…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="hero-details">
+          <div className="hero-stat">
+            <span>24k+</span>
+            <p>Active listings</p>
+          </div>
+          <div className="hero-stat">
+            <span>8.5k</span>
+            <p>Trusted sellers</p>
+          </div>
+          <div className="hero-stat">
+            <span>1.2M</span>
+            <p>Monthly visits</p>
+          </div>
+        </div>
+      </header>
+
+      <section className="category-bar">
+        <div className="category-label">Popular categories:</div>
+        <div className="category-list">
+          {categories.map((item) => (
+            <button
+              key={item}
+              className={item === category ? 'category-button active' : 'category-button'}
+              onClick={() => setCategory(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {loading ? (
+        <div className="status-message">Loading marketplace listings…</div>
+      ) : error ? (
+        <div className="status-message error">{error}</div>
+      ) : (
+        <div className="content-grid">
+          <main className="products-column">
+            {filteredProducts.length === 0 ? (
+              <div className="status-message">No listings match your search.</div>
+            ) : (
+              <div className="product-grid">
+                {filteredProducts.map((product) => (
+                  <article key={product.product_id} className="product-card">
+                    <div className="product-card-top">
+                      <div className="product-badge">{product.product_category || 'Other'}</div>
+                      <span className="product-condition">{product.product_condition || 'Condition unknown'}</span>
+                    </div>
+                    <div className="product-card-content">
+                      <h3>{product.product_name}</h3>
+                      <p>{product.product_brand || 'Brand not specified'}</p>
+                      <p className="product-description">{product.product_description || 'No description available.'}</p>
+                    </div>
+                    <div className="product-card-footer">
+                      <span className="price">₱{product.product_price}</span>
+                      <button className="buy-button" onClick={() => handleBuyNow(product)}>
+                        Buy now
+                      </button>
+                    </div>
+                  </article>
+                ))}
               </div>
+            )}
+          </main>
 
-              {checkoutError && <p style={{ color: '#b91c1c' }}>{checkoutError}</p>}
-
-              <div style={{ marginTop: 20, display: 'flex', gap: 12 }}>
-                <button
-                  onClick={handleSubmitOrder}
-                  disabled={checkoutState === 'submitting'}
-                  style={{ padding: '12px 20px', borderRadius: 10, border: 'none', background: '#0064d2', color: 'white', cursor: 'pointer' }}
-                >
-                  {checkoutState === 'submitting' ? 'Processing...' : 'Confirm purchase'}
-                </button>
-                <button
-                  onClick={resetCheckout}
-                  style={{ padding: '12px 20px', borderRadius: 10, border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer' }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+          {selectedProduct && (
+            <aside className="checkout-panel">
+              {checkoutState === 'success' ? (
+                <div className="order-success">
+                  <h2>Thank you for your purchase</h2>
+                  <p>
+                    Your order for <strong>{selectedProduct.product_name}</strong> is confirmed. You will receive a confirmation email shortly.
+                  </p>
+                  <button className="secondary-button" onClick={resetCheckout}>
+                    Back to marketplace
+                  </button>
+                </div>
+              ) : (
+                <div className="checkout-card">
+                  <div className="checkout-header">
+                    <h2>Checkout</h2>
+                    <span>{selectedProduct.product_category || 'Listing'}</span>
+                  </div>
+                  <div className="checkout-product">
+                    <h3>{selectedProduct.product_name}</h3>
+                    <p>{selectedProduct.product_brand || 'Brand not specified'}</p>
+                    <span className="checkout-price">₱{selectedProduct.product_price}</span>
+                  </div>
+                  <form className="checkout-form" onSubmit={(e) => e.preventDefault()}>
+                    <div className="input-grid">
+                      <label>
+                        First name
+                        <input name="first_name" value={checkoutData.first_name} onChange={handleCheckoutChange} required />
+                      </label>
+                      <label>
+                        Last name
+                        <input name="last_name" value={checkoutData.last_name} onChange={handleCheckoutChange} required />
+                      </label>
+                    </div>
+                    <label>
+                      Email address
+                      <input type="email" name="email" value={checkoutData.email} onChange={handleCheckoutChange} required />
+                    </label>
+                    <label>
+                      Phone number
+                      <input name="phone" value={checkoutData.phone} onChange={handleCheckoutChange} required />
+                    </label>
+                    <label>
+                      Street address
+                      <input name="street" value={checkoutData.street} onChange={handleCheckoutChange} required />
+                    </label>
+                    <div className="input-grid">
+                      <label>
+                        City
+                        <input name="city" value={checkoutData.city} onChange={handleCheckoutChange} required />
+                      </label>
+                      <label>
+                        Country
+                        <input name="country" value={checkoutData.country} onChange={handleCheckoutChange} required />
+                      </label>
+                    </div>
+                    <label>
+                      Postal code
+                      <input name="postal_code" value={checkoutData.postal_code} onChange={handleCheckoutChange} required />
+                    </label>
+                    {checkoutError && <div className="status-message error">{checkoutError}</div>}
+                    <button className="primary-button" type="button" onClick={handleSubmitOrder} disabled={checkoutState === 'submitting'}>
+                      {checkoutState === 'submitting' ? 'Processing order…' : 'Place order'}
+                    </button>
+                    <button className="secondary-button" type="button" onClick={resetCheckout}>
+                      Cancel
+                    </button>
+                  </form>
+                </div>
+              )}
+            </aside>
           )}
         </div>
-      ) : (
-        <ul style={{ listStyle: 'none', padding: 0, marginTop: 24 }}>
-          {products.map((product) => (
-            <li
-              key={product.product_id}
-              style={{
-                marginBottom: 18,
-                padding: 18,
-                border: '1px solid #d0d7de',
-                borderRadius: 12,
-                display: 'grid',
-                gap: 10,
-              }}
-            >
-              <div>
-                <h2 style={{ margin: '0 0 8px' }}>{product.product_name}</h2>
-                <p style={{ margin: '0 0 6px', color: '#475569' }}>
-                  {product.product_brand || 'Brand not set'} · {product.product_category || 'No category'} · {product.product_condition || 'Condition unknown'}
-                </p>
-                <p style={{ margin: '0 0 6px' }}>{product.product_description}</p>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-                <strong>₱{product.product_price}</strong>
-                <button
-                  onClick={() => handleBuyNow(product)}
-                  style={{ padding: '12px 18px', borderRadius: 10, border: 'none', background: '#0064d2', color: 'white', cursor: 'pointer' }}
-                >
-                  Buy now
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
       )}
     </div>
   );
