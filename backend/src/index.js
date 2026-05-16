@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import productsRouter from './routes/products.js';
 import usersRouter from './routes/users.js';
+import authRouter from './routes/auth.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', version: '0.1.0' });
 });
 
+app.use('/api/auth', authRouter);
 app.use('/api/products', productsRouter);
 app.use('/api/users', usersRouter);
 
