@@ -1,0 +1,22 @@
+{
+  "name": "ebay-ph-clone-backend",
+  "version": "0.1.0",
+  "description": "Backend API for an eBay Philippines-style marketplace using Supabase.",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "migrate": "node scripts/migrate.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  }
+}

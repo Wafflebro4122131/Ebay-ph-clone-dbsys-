@@ -1,0 +1,8 @@
+# Supabase migration config
+# Use the Supabase CLI in your local project root for migration commands.
+
+project_id = ""
+
+[db]
+# Optional local schema settings
+# schema = "public"
