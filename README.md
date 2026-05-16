@@ -29,7 +29,26 @@ A lightweight marketplace clone with React frontend and Express backend, using S
 5. Run the backend and frontend:
    - `cd backend && npm run dev`
    - `cd frontend && npm run dev`
+## GitHub and deployment
 
+This project is initialized as a Git repository in `C:\Users\User\source\ebay-ph-clone`.
+
+To publish to GitHub:
+
+- `git remote add origin https://github.com/<your-username>/<repo-name>.git`
+- `git push -u origin master`
+
+To deploy the frontend:
+
+- Build with `cd frontend && npm run build`
+- Host the static `frontend/dist` folder on Vercel, Netlify, or any static host
+
+To deploy the backend:
+
+- Host the Express API on a Node-capable platform such as Render, Railway, or Heroku
+- Ensure `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` are configured in the environment
+
+If you want a single hosted experience, deploy frontend and backend separately and point the frontend API calls to the backend URL.
 ## Supabase migration
 
 A migration file is included at `supabase/migrations/000001_init_tables.sql`.
